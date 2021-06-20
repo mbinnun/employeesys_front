@@ -1,0 +1,16 @@
+.PageNotFound { 
+  display: flex; 
+  flex-flow: column; 
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100vh;
+  width: 100vw;
+}
+.PageNotFound .template {
+  margin-top: -25vh;
+  padding: 40px 0;
+}
+.PageNotFound .actions {
+  margin: 15px auto;
+}
