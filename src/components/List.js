@@ -135,7 +135,7 @@ class List extends Component {
               <td className="align-middle">{employee.strFirstName}</td>
               <td className="align-middle">{employee.strLastName}</td>
               <td className="align-middlle d-none d-md-table-cell">{employee.strEmail}</td>
-              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <Link to={"/employees/update/"+employee._id}><MDBIcon icon="pencil-alt" className="FwIcon" title="Click to edit this employee" /></Link> : ''}</td>
+              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <Link to={"/employeesys/update/"+employee._id}><MDBIcon icon="pencil-alt" className="FwIcon" title="Click to edit this employee" /></Link> : ''}</td>
               <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <MDBIcon onClick={() => { this.saveDeletedEmployee(employee._id); }} far icon="trash-alt" className="FwIcon" title="Click to delete this employee" /> : ''}</td>
             </tr>
           ) 

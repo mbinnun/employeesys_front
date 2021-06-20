@@ -1,0 +1,60 @@
+.Ripple { top: 0px; left: 0px; width: 0px; height: 0px; }
+
+.Update .Row {
+  min-height: calc(100vh);
+}
+@media only screen and (min-width: 768px) {
+  .Update .Row {
+    min-height: calc(100vh - 70px);
+  }
+}
+
+.Update .Col {
+  border: 2px solid #ddd;
+  padding-top: 50px;
+  padding-bottom: 20px;
+}
+.Update .Boy {
+  display:block;
+  position:absolute;
+  top: -50px;
+  left: calc(50% - 50px);
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  background-color:#ccc;
+  padding: 10px;
+}
+.Update .Title {
+  padding-top: 30px;
+  padding-bottom: 10px;
+}
+.Update .ErrorList {
+  display: block;
+  color: red;
+  text-align: left;
+  width: 90%;
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+  list-style-position: inside;
+  font-weight: bold;
+  border-radius: 3px;
+  background-color: #fffffa;
+}
+
+.Update .Btn {
+  text-transform: none !important;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  padding: 0.4rem 2.14rem;
+}
+
+.Update .Spinner, .Update .RedirectSpinner {
+  display: none;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+}

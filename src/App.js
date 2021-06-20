@@ -10,6 +10,7 @@ import PageNotFound from './error_pages/PageNotFound';
 import NavBar from './components/NavBar';
 import NavBarMobile from './components/NavBarMobile';
 import List from './components/List';
+import Update from './components/Update';
 import Login from './components/Login';
 import Verify from './components/Verify';
 import Register from './components/Register';
@@ -116,6 +117,8 @@ class App extends Component {
             <Route exact path="/employeesys/login"    render={(props) => <Login    {...this.state} saveToken={this.saveToken}                 />} />
             <Route exact path="/employeesys/verify"   render={(props) => <Verify   {...this.state} saveVerifiedState={this.saveVerifiedState} />} />
             <Route exact path="/employeesys/register" render={(props) => <Register {...this.state} saveToken={this.saveToken}                 />} />
+
+            <Route path="/employeesys/update/:employeeid" render={(props) => <Update {...this.state} removeToken={this.removeToken} updatedid={props.match.params.employeeid} />} />
 
             {/* Catch all the other to 404 */}
             <Route component={PageNotFound} />

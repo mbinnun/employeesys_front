@@ -7,11 +7,11 @@ import { MDBContainer, MDBRow, MDBCol, MDBInput } from 'mdbreact';
 import axios from 'axios';
 // JQuery
 import $ from 'jquery';
-// Register styles
-import '../components_styles/Register.css';
+// Update styles
+import '../components_styles/Update.css';
 
 // Component injection
-class Register extends Component {
+class Update extends Component {
 
   state = {};
 
@@ -23,13 +23,87 @@ class Register extends Component {
     
     // initialize the error array
     this.state.errors = [];
+
+    // initialize details before getting from ajax
+    this.state.strFirstName = '';
+    this.state.strLastName  = '';
   }
 
   // == lifecycle hooks ==
   componentDidMount() { 
-    // redirect an already logged-in employee to the private area
-    this.handleLoggedIn();
+    // redirect not logged-in employees to the login page
+    if (!this.handleNotLoggedIn()) {
+      this.getEmployeeData();
+    }
   }
+
+  handleNotLoggedIn = () => {
+    // force redirect not logged-in employees to the login page
+    if (!this.props.strAuthToken || this.props.strAuthToken === '') {
+      $('.Container').hide();
+      $('.Update .RedirectSpinner').show();
+      window.location.href = '/employeesys/login';
+      return true;
+    }
+    // force not verified users to verify their e-mail
+    else if (!this.props.flgVerified || this.props.flgVerified === false || this.props.flgVerified === 'false') {
+      $('.Container').hide();
+      $('.Update .RedirectSpinner').show();
+      window.location.href = '/employeesys/verify';
+      return true;
+    }
+    // must have the updated user id
+    else if (!this.props.updatedid || this.props.updatedid === '') {
+      $('.Container').hide();
+      $('.Update .RedirectSpinner').show();
+      window.location.href = '/employeesys/list';
+      return true;
+    }
+    // must be admin or myself
+    else if (this.props.updatedid != this.props.strId && !(this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) {
+      $('.Container').hide();
+      $('.Update .RedirectSpinner').show();
+      window.location.href = '/employeesys/list';
+      return true;
+    }
+    else {
+      return false;
+    }
+  };
+
+  getEmployeeData = () => {
+    if (this.flgSending === 0) {
+      // fetch employee list from the API
+      this.flgSending = 1;
+      axios.get(this.props.apiUrl + '/api/employees/'+this.props.updatedid, {
+        headers: {
+          'Authorization': 'Bearer '+this.props.strAuthToken
+        }
+      })
+      .then(resp => {
+        // Success ==> get the employees list
+        this.flgSending = 0;
+        const objResponse  = resp.data;
+        if (objResponse.data) {
+          // extract the employee name
+          const strFirstName = objResponse.data.strFirstName;
+          const strLastName  = objResponse.data.strLastName;
+          // update the state
+          this.setState({...this.state, strFirstName: strFirstName, strLastName: strLastName});
+        }
+      })
+      .catch(err => { 
+        // Error ==> Token is invalid or already expired
+        this.flgSending = 0;
+        $('.List .RedirectSpinner').hide();
+        $('.Container').show();
+        // Revoke the authorization token
+        this.props.removeToken();
+        // Force redirect to login page
+        window.location.href = '/employeesys/login';
+      });
+    }
+  };
 
   // Error list builder
   ErrorList = () => {
@@ -55,8 +129,6 @@ class Register extends Component {
 
       const fname    = event.target.form[0].value;
       const lname    = event.target.form[1].value;
-      const email    = event.target.form[2].value;
-      const password = event.target.form[3].value;
       const arrErrors = [];
 
       // check first name
@@ -69,56 +141,42 @@ class Register extends Component {
         // lname error ==> add to the errors array
         arrErrors.push('Last name is required');
       }
-      // check email
-      if (email === "") {
-        // email error ==> add to the errors array
-        arrErrors.push('Email is required');
-      }
-      else {
-        var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
-        if (!pattern.test(email)) {
-          // email error ==> add to the errors array
-          arrErrors.push('Please enter a valid email');
-        }
-      }
-      // check password
-      if (password === "") {
-        // password error ==> add to the errors array
-        arrErrors.push('Password is required');
-      }
-
+      
       this.setState({...this.state, errors: arrErrors});
 
       // if no errors - submit to the API
       if (arrErrors.length === 0) {
         this.flgSending = 1;
-        $('.Register .Spinner').show();
+        $('.Update .Spinner').show();
 
         // send a log-in request to the API
-        axios.post(this.props.apiUrl + '/api/employees/', {
+        axios.put(this.props.apiUrl + '/api/employees/'+this.props.updatedid, {
           fname:    fname,
           lname:    lname,
-          email:    email,
-          password: password
+        },
+        {
+          headers: {
+            'Authorization': 'Bearer '+this.props.strAuthToken
+          }
         })
         .then(resp => {
           // Success ==> get the token
           this.flgSending = 0;
-          $('.Register .Spinner').hide();
+          $('.Update .Spinner').hide();
           const objResponse = resp.data;
-          if (objResponse.data && objResponse.data._id && objResponse.data._id !== '') {
+          if (objResponse.data && objResponse.data.strFirstName && objResponse.data.strFirstName !== '') {
             // registered succesfully ==> perform login
-            this.loginAfterRegister (email, password);
+            window.location.href = '/employeesys/list';
           } else {
             // registration error ==> add an error to the errors array
-            arrErrors.push('Error during registrtaion.');
+            arrErrors.push('Error during update.');
             this.setState({...this.state, errors: arrErrors});
           }
         })
         .catch(err => { 
           // Error ==> get the error from the response
           this.flgSending = 0;
-          $('.Register .Spinner').hide();
+          $('.Update .Spinner').hide();
           let objResponse = {};
           // parse error types
           if (err.response) {
@@ -153,90 +211,30 @@ class Register extends Component {
     }
   }
 
-  loginAfterRegister = (email, password) => {
-    if (this.flgSending === 0) {
-      this.flgSending = 1;
-      $('.Login .Spinner').show();
-
-      // send a log-in request to the API
-      axios.post(this.props.apiUrl + '/api/employees/login/', {
-        email:    email,
-        password: password
-      })
-      .then(resp => {
-        // Success ==> get the token
-        this.flgSending = 0;
-        $('.Login .Spinner').hide();
-        const objResponse = resp.data;
-        if (objResponse.data && objResponse.data.token && objResponse.data.token.length > 0) {
-
-          // token generated ==> save the token
-          this.props.saveToken(
-            objResponse.data.token, 
-            objResponse.data.strFirstName, 
-            objResponse.data.flgEmailVerified, 
-            objResponse.data.flgAdmin, 
-            objResponse.data._id
-          );
-
-          // force moving the logged-in user to personal area
-          if (objResponse.data.flgEmailVerified) {
-            window.location.href = '/employeesys/list';
-          } else {
-            window.location.href = '/employeesys/verify';
-          }
-
-        } else {
-          // no token ==> return to login screen
-          window.location.href = '/employeesys/login';
-        }
-      })
-      .catch(err => { 
-        // Error ==> return to the login screen
-        this.flgSending = 0;
-        $('.Login .Spinner').hide();
-        window.location.href = '/employeesys/login';
-      });
-    }
+  handleChangeFname(e) {
+    this.setState({strFirstName: e.target.value})
   }
-
-  handleLoggedIn = () => {
-    // force redirect an already logged-in employee to the personal area
-    if (this.props.strAuthToken && this.props.strAuthToken !== '') {
-      $('.Container').hide();
-      $('.Register .RedirectSpinner').show();
-      if (this.props.flgVerified && (this.props.flgVerified === true || this.props.flgVerified === 'true')) {
-        window.location.href = '/employeesys/list';
-      } else {
-        window.location.href = '/employeesys/verify';
-      }
-    }
+  handleChangeLname(e) {
+    this.setState({strLastName: e.target.value})
   }
 
   render() {
     return (
-      <div className="Register">
+      <div className="Update">
         <MDBContainer className="Container">
-          <MDBRow className="Row align-items-center justify-content-center flex-column">
-            <p className="Title h2 text-center mb-4">Register</p>
+          <MDBRow className="Row align-items-center flex-column">
+            <p className="Title h2 text-center mb-4">Update Employee</p>
             <MDBCol md="6" className="Col mx-auto bg-white">
-              <img src="/boy.png" alt="boy" className="Boy" />
 
-              {/* login form */}
+              {/* update form */}
               <form onSubmit={this.handleSubmit}>
                 <div className="grey-text">
 
                   {/* first name input */}
-                  <MDBInput label="First name" icon="user" group type="text" name="fname" validate success="right" />
+                  <MDBInput label="First name" icon="user" group type="text" name="fname" value={this.state.strFirstName} onChange={this.handleChangeFname.bind(this)} validate success="right" />
 
                   {/* last name input */}
-                  <MDBInput label="Last name" icon="user" group type="text" name="lname" validate success="right" />
-
-                  {/* email input */}
-                  <MDBInput label="Email" icon="envelope" group type="email" name="email" validate error="wrong" success="right" />
-
-                  {/* password input */}
-                  <MDBInput label="Password" icon="lock" group type="password" name="password" validate />
+                  <MDBInput label="Last name" icon="user" group type="text" name="lname" value={this.state.strLastName} onChange={this.handleChangeLname.bind(this)} validate success="right" />
 
                 </div>
                 <div className="text-center">
@@ -249,10 +247,10 @@ class Register extends Component {
                   
                   {/* submit button */}
                   <button type="submit" className="btn btn-primary Ripple-parent Btn" onClick={(event) => this.handleSubmit(event)}>
-                    Register
+                    Update
                     <div className="Ripple"></div>
                   </button>
-                  <Link to="/employeesys/login" className="ml-3">Cancel</Link>
+                  <Link to="/employeesys/list" className="ml-3">Cancel</Link>
 
                 </div>
               </form>
@@ -268,4 +266,4 @@ class Register extends Component {
   }
 };
 
-export default Register;
+export default Update;
