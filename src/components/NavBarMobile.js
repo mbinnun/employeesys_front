@@ -1,11 +1,10 @@
 // DOM dependencies
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { MDBNavbar, MDBNavbarNav, MDBIcon } from 'mdbreact';
-// NavBar styles
-import '../components_styles/NavBar.css';
+// NavBarMobile styles
+import '../components_styles/NavBarMobile.css';
 
-class NavBar extends React.Component {
+class NavBarMobile extends React.Component {
   /*constructor(props) {
       super(props);
   }*/
@@ -15,8 +14,8 @@ class NavBar extends React.Component {
     if (this.props.strAuthToken && this.props.strAuthToken !== '') {
       return (
         <div className="d-flex align-items-center PersonalDetails">
+          <div className="Boy"><img src="/boy.png" alt="boy" className="Boy" /></div>
           <div className="FirstName">{this.props.strFirstName}</div>
-          <div><MDBIcon icon="sign-out-alt" className="SignOut" title="Click to sign out" onClick={this.SignOut} /></div>
         </div>
       );
     }
@@ -32,16 +31,23 @@ class NavBar extends React.Component {
     window.location.href = '/employeesys/login';
   };
 
+  GoBack = () => {
+    if (window.location.href.indexOf('/employeesys/list') > 1) {
+      this.SignOut();
+    }
+    else if (window.location.href.indexOf('/employeesys/update') > 1) {
+      window.location.href = '/employeesys/list';
+    }
+  };
+
   render() {
     return(
-      <div className="NavBar">
-        <MDBNavbar dark expand="md" scrolling fixed="top" className="d-none d-md-flex bg-white NavWrapper">
+      <div className="NavBarMobile">
+        <MDBNavbar dark expand="md" scrolling fixed="top" className="d-flex d-md-none bg-white NavWrapper">
 
           {/* Left side */}
           <MDBNavbarNav left>
-            <Link to="/employeesys/list" title="EmployeeSys Home Page">
-              <img src="/ls_logo.png" alt="ls_logo" />
-            </Link>
+            <MDBIcon icon="angle-left" className="GoBack" style={{fontSize: 32}} title="Click to go back" onClick={this.GoBack} />
           </MDBNavbarNav>
 
           {/* Right side */}
@@ -55,4 +61,4 @@ class NavBar extends React.Component {
   }
 }
 
-export default NavBar;
+export default NavBarMobile;

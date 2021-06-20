@@ -1,0 +1,13 @@
+.NavBar .NavWrapper {
+  height: 70px;
+}
+
+.NavBar .PersonalDetails div {
+  padding: 0 7px;
+}
+
+.NavBar .SignOut {
+  font-size: 20px;
+  cursor: pointer;
+  margin-top: 2px;
+}

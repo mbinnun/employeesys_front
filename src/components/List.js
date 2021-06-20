@@ -2,7 +2,7 @@
 import React, {Component} from 'react';
 import { MDBTable, MDBTableBody, MDBTableHead, MDBIcon } from 'mdbreact';
 // Routing dependencies
-import { Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 // AJAX helper
 import axios from 'axios';
 // JQuery
@@ -17,7 +17,6 @@ class List extends Component {
 
   // Ajax flag to prevent duplicate requests
   flgSending = 0;
-
 
   constructor(props) {
     super(props);
@@ -48,7 +47,15 @@ class List extends Component {
       $('.List .RedirectSpinner').show();
       window.location.href = '/employeesys/login';
       return true;
-    } else {
+    }
+    // force not verified users to verify their e-mail
+    else if (!this.props.flgVerified || this.props.flgVerified === false || this.props.flgVerified === 'false') {
+      $('.Container').hide();
+      $('.List .RedirectSpinner').show();
+      window.location.href = '/employeesys/verify';
+      return true;
+    }
+    else {
       return false;
     }
   }
@@ -74,13 +81,30 @@ class List extends Component {
       this.setState({...this.state, arrEmployees: arrEmployees});
     })
     .catch(err => { 
-      // Error ==> Treat as auth-token has expired
+      // Error ==> Check if because of a non-verified email or an expired token
       this.flgSending = 0;
-      console.log(err);
-
-      // Revoke the authorization token
-      // Force redirect to login page
+      let errNotVerified = false;
+      if (err.response && err.response.data && err.response.data.data && err.response.data.data === 'You should verify your email before performing this action') {
+        errNotVerified = true;
+      }
+      // Decide the action accoding to the error type
+      if (errNotVerified) {
+        // not verified email ==> send the user to verify
+        $('.Container').hide();
+        $('.List .RedirectSpinner').show();
+        window.location.href = '/employeesys/verify';
+        return true;
+      } else {
+        // Revoke the authorization token
+        this.props.removeToken();
+        // Force redirect to login page
+        window.location.href = '/employeesys/login';
+      }
     });
+  }
+
+  deleteEmployee = (employeeId) => {
+    console.log('deleting employee', employeeId)
   }
 
   employeeListBuilder = () => {
@@ -90,12 +114,12 @@ class List extends Component {
         <MDBTableBody className="TableBody">{
           this.state.arrEmployees.map( (employee, index) => 
             <tr key={employee._id}>
-              <td>{index+1}</td>
-              <td>{employee.strFirstName}</td>
-              <td>{employee.strLastName}</td>
-              <td>{employee.strEmail}</td>
-              <td>{(this.props.strId === employee._id || this.props.flgAdmin) ? <MDBIcon     icon="pencil-alt" className="FwIcon" title="Click to edit this employee"   /> : ''}</td>
-              <td>{(this.props.strId === employee._id || this.props.flgAdmin) ? <MDBIcon far icon="trash-alt"  className="FwIcon" title="Click to delete this employee" /> : ''}</td>
+              <td className="align-middle">{index+1}</td>
+              <td className="align-middle">{employee.strFirstName}</td>
+              <td className="align-middle">{employee.strLastName}</td>
+              <td className="align-middlle d-none d-md-table-cell">{employee.strEmail}</td>
+              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <Link to={"/employees/update/"+employee._id}><MDBIcon icon="pencil-alt" className="FwIcon" title="Click to edit this employee" /></Link> : ''}</td>
+              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <MDBIcon onClick={() => { this.deleteEmployee(employee._id); }} far icon="trash-alt" className="FwIcon" title="Click to delete this employee" /> : ''}</td>
             </tr>
           ) 
         }</MDBTableBody>
@@ -116,23 +140,26 @@ class List extends Component {
   render() {
     return (
       <div className="List">
-        <div className="container Container m">
-          <h1>Managing Employees</h1>
-          <MDBTable className="Table mx-auto">
-            {/* Table Head */}
-            <MDBTableHead className="TableHead">
-              <tr>
-                <th>#</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th></th>
-                <th></th>
-              </tr>
-            </MDBTableHead>
-            {/* Table Items */}
-            {this.employeeListBuilder()}
-          </MDBTable>
+        <div className="container Container">
+          <h1 className="d-none d-md-block">Managing Employees</h1>
+          <h3 className="d-block d-md-none mx-auto text-center p-3">Managing Employees</h3>
+          <div className="TableWrapper">
+            <MDBTable className="Table mx-auto">
+              {/* Table Head */}
+              <MDBTableHead className="TableHead">
+                <tr>
+                  <th className="align-middle">#</th>
+                  <th className="align-middle">First Name</th>
+                  <th className="align-middle">Last Name</th>
+                  <th className="d-none d-md-table-cell">Email</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </MDBTableHead>
+              {/* Table Items */}
+              {this.employeeListBuilder()}
+            </MDBTable>
+          </div>
         </div>
         <div className="RedirectSpinner"><div className="spinner-border" role="status"><span className="sr-only">Loading...</span></div></div>
       </div>

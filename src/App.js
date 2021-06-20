@@ -8,6 +8,7 @@ import './App.css';
 // Route components
 import PageNotFound from './error_pages/PageNotFound';
 import NavBar from './components/NavBar';
+import NavBarMobile from './components/NavBarMobile';
 import List from './components/List';
 import Login from './components/Login';
 
@@ -46,9 +47,43 @@ class App extends Component {
     // save the token to the storage
     localStorage.setItem('strAuthToken', token);
     localStorage.setItem('strFirstName', fname);
-    localStorage.setItem('flgAdmin'    , isVerified);
-    localStorage.setItem('flgVerified' , isAdmin);
+    localStorage.setItem('flgVerified' , isVerified);
+    localStorage.setItem('flgAdmin'    , isAdmin);
     localStorage.setItem('strId'       , _id);
+  };
+
+  // == save a newly generate log-in token ==
+  removeToken = () => {
+    // save the token to the state
+    this.setState({...this.state, 
+      strAuthToken: '', 
+      strFirstName: '', 
+      flgVerified : '', 
+      flgAdmin    : '',
+      strId       : ''
+    });
+    // save the token to the storage
+    localStorage.setItem('strAuthToken', '');
+    localStorage.setItem('strFirstName', '');
+    localStorage.setItem('flgAdmin'    , '');
+    localStorage.setItem('flgVerified' , '');
+    localStorage.setItem('strId'       , '');
+  };
+
+  NavBarMobile = () => {
+    if (this.state.strAuthToken && this.state.strAuthToken !== '') {
+      return (<NavBarMobile {...this.state} removeToken={this.removeToken} />);
+    } else {
+      return ('');
+    }
+  };
+
+  NavPadClassName = () => {
+    if (this.state.strAuthToken && this.state.strAuthToken !== '') {
+      return "NavPad d-block";
+    } else {
+      return "NavPad d-block NavPadHideMobile";
+    }
   }
 
   render() {
@@ -57,8 +92,9 @@ class App extends Component {
 
         <Router>
 
-          <NavBar />
-          <div className="NavPad d-none d-md-block"></div>
+          <NavBar {...this.state} removeToken={this.removeToken} />
+          {this.NavBarMobile()}
+          <div className={this.NavPadClassName()}></div>
           
           <Switch>
 
@@ -67,8 +103,8 @@ class App extends Component {
             <Route exact path="/employeesys/" render={()=> <Redirect to='/employeesys/list' />} />
 
             {/* App pages */}
-            <Route exact path="/employeesys/list"  render={(props) => <List  {...this.state} />} />
-            <Route exact path="/employeesys/login" render={(props) => <Login {...this.state} saveToken={this.saveToken} />} />
+            <Route exact path="/employeesys/list"  render={(props) => <List  {...this.state} removeToken={this.removeToken} />} />
+            <Route exact path="/employeesys/login" render={(props) => <Login {...this.state} saveToken={this.saveToken}     />} />
 
             {/* Catch all the other to 404 */}
             <Route component={PageNotFound} />
