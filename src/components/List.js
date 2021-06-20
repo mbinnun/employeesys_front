@@ -1,6 +1,6 @@
 // DOM dependencies
 import React, {Component} from 'react';
-import { MDBTable, MDBTableBody, MDBTableHead, MDBIcon } from 'mdbreact';
+import { MDBTable, MDBTableBody, MDBTableHead, MDBIcon, MDBModal, MDBModalBody, MDBModalHeader, MDBModalFooter } from 'mdbreact';
 // Routing dependencies
 import { Link } from 'react-router-dom';
 // AJAX helper
@@ -26,6 +26,12 @@ class List extends Component {
 
     // initialize the employees array
     this.state.arrEmployees = [];
+
+    // hide modal
+    this.state.modal = false;
+
+    // hold the currently deleted employee
+    this.state.currDeletedId = '';
   }
 
   componentDidMount()    { 
@@ -89,9 +95,33 @@ class List extends Component {
     }
   }
 
-  deleteEmployee = (employeeId) => {
-    
+  saveDeletedEmployee = (employeeId) => {
+    this.setState({...this.state, currDeletedId: employeeId});
+    this.toggleModal();
+  }
 
+  deleteEmployee = () => {
+    if (this.props.strId === this.state.currDeletedId || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) {
+      if (this.flgSending === 0) {
+        this.flgSending = 1;
+        // send a delete request to the API
+        axios.delete(this.props.apiUrl + '/api/employees/'+this.state.currDeletedId, {
+          headers: {
+            'Authorization': 'Bearer '+this.props.strAuthToken
+          }
+        })
+        .then(resp => {
+          // Success ==> reload the list
+          this.flgSending = 0;
+          this.getEmployeeData();
+        })
+        .catch(err => { 
+          // Error ==> reload the list
+          this.flgSending = 0;
+          this.getEmployeeData();
+        });
+      }
+    }
   }
 
   employeeListBuilder = () => {
@@ -106,7 +136,7 @@ class List extends Component {
               <td className="align-middle">{employee.strLastName}</td>
               <td className="align-middlle d-none d-md-table-cell">{employee.strEmail}</td>
               <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <Link to={"/employees/update/"+employee._id}><MDBIcon icon="pencil-alt" className="FwIcon" title="Click to edit this employee" /></Link> : ''}</td>
-              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <MDBIcon onClick={() => { this.deleteEmployee(employee._id); }} far icon="trash-alt" className="FwIcon" title="Click to delete this employee" /> : ''}</td>
+              <td className="align-middle">{(this.props.strId === employee._id || (this.props.flgAdmin && (this.props.flgAdmin === true || this.props.flgAdmin === 'true'))) ? <MDBIcon onClick={() => { this.saveDeletedEmployee(employee._id); }} far icon="trash-alt" className="FwIcon" title="Click to delete this employee" /> : ''}</td>
             </tr>
           ) 
         }</MDBTableBody>
@@ -122,6 +152,12 @@ class List extends Component {
         </MDBTableBody>
       );
     }
+  }
+
+  toggleModal = () => {
+    this.setState({
+      modal: !this.state.modal
+    });
   }
 
   render() {
@@ -149,6 +185,17 @@ class List extends Component {
           </div>
         </div>
         <div className="RedirectSpinner"><div className="spinner-border" role="status"><span className="sr-only">Loading...</span></div></div>
+        {/* pop up window */}
+        <MDBModal isOpen={this.state.modal} toggle={this.toggleModal}>
+          <MDBModalHeader toggle={this.toggleModal}>Deleting Employee</MDBModalHeader>
+          <MDBModalBody>
+            Are you sure?
+          </MDBModalBody>
+          <MDBModalFooter>
+            <button className="btn-primary p-2"   onClick={ (event) => {event.preventDefault(); this.toggleModal(); this.deleteEmployee();} }>Yes</button>
+            <button className="btn-secondary p-2" onClick={ (event) => {event.preventDefault(); this.toggleModal();} }>No</button>
+          </MDBModalFooter>
+        </MDBModal>
       </div>
     )
   }
