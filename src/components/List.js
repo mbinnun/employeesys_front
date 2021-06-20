@@ -81,25 +81,14 @@ class List extends Component {
       this.setState({...this.state, arrEmployees: arrEmployees});
     })
     .catch(err => { 
-      // Error ==> Check if because of a non-verified email or an expired token
+      // Error ==> Token is invalid or already expired
       this.flgSending = 0;
-      let errNotVerified = false;
-      if (err.response && err.response.data && err.response.data.data && err.response.data.data === 'You should verify your email before performing this action') {
-        errNotVerified = true;
-      }
-      // Decide the action accoding to the error type
-      if (errNotVerified) {
-        // not verified email ==> send the user to verify
-        $('.Container').hide();
-        $('.List .RedirectSpinner').show();
-        window.location.href = '/employeesys/verify';
-        return true;
-      } else {
-        // Revoke the authorization token
-        this.props.removeToken();
-        // Force redirect to login page
-        window.location.href = '/employeesys/login';
-      }
+      $('.List .RedirectSpinner').hide();
+      $('.Container').show();
+      // Revoke the authorization token
+      this.props.removeToken();
+      // Force redirect to login page
+      window.location.href = '/employeesys/login';
     });
   }
 
