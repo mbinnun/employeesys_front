@@ -7,11 +7,11 @@ import { MDBContainer, MDBRow, MDBCol, MDBInput } from 'mdbreact';
 import axios from 'axios';
 // JQuery
 import $ from 'jquery';
-// Login styles
-import '../components_styles/Login.css';
+// Register styles
+import '../components_styles/Register.css';
 
 // Component injection
-class Login extends Component {
+class Register extends Component {
 
   state = {};
 
@@ -20,6 +20,7 @@ class Login extends Component {
 
   constructor(props) {
     super(props);
+    
     // initialize the error array
     this.state.errors = [];
   }
@@ -29,7 +30,7 @@ class Login extends Component {
     // redirect an already logged-in employee to the private area
     this.handleLoggedIn();
   }
-  
+
   // Error list builder
   ErrorList = () => {
     if (this.state.errors.length > 0) {
@@ -52,10 +53,22 @@ class Login extends Component {
 
     if (this.flgSending === 0) {
 
-      const email    = event.target.form[0].value;
-      const password = event.target.form[1].value;
+      const fname    = event.target.form[0].value;
+      const lname    = event.target.form[1].value;
+      const email    = event.target.form[2].value;
+      const password = event.target.form[3].value;
       const arrErrors = [];
 
+      // check first name
+      if (fname === "") {
+        // fname error ==> add to the errors array
+        arrErrors.push('First name is required');
+      }
+      // check last name
+      if (fname === "") {
+        // lname error ==> add to the errors array
+        arrErrors.push('Last name is required');
+      }
       // check email
       if (email === "") {
         // email error ==> add to the errors array
@@ -79,46 +92,33 @@ class Login extends Component {
       // if no errors - submit to the API
       if (arrErrors.length === 0) {
         this.flgSending = 1;
-        $('.Login .Spinner').show();
+        $('.Register .Spinner').show();
 
         // send a log-in request to the API
-        axios.post(this.props.apiUrl + '/api/employees/login/', {
+        axios.post(this.props.apiUrl + '/api/employees/', {
+          fname:    fname,
+          lname:    lname,
           email:    email,
           password: password
         })
         .then(resp => {
           // Success ==> get the token
           this.flgSending = 0;
-          $('.Login .Spinner').hide();
+          $('.Register .Spinner').hide();
           const objResponse = resp.data;
-          if (objResponse.data && objResponse.data.token && objResponse.data.token.length > 0) {
-
-            // token generated ==> save the token
-            this.props.saveToken(
-              objResponse.data.token, 
-              objResponse.data.strFirstName, 
-              objResponse.data.flgEmailVerified, 
-              objResponse.data.flgAdmin, 
-              objResponse.data._id
-            );
-
-            // force moving the logged-in user to personal area
-            if (objResponse.data.flgEmailVerified) {
-              window.location.href = '/employeesys/list';
-            } else {
-              window.location.href = '/employeesys/verify';
-            }
-
+          if (objResponse.data && objResponse.data._id && objResponse.data._id !== '') {
+            // registered succesfully ==> perform login
+            this.loginAfterRegister (email, password);
           } else {
-            // no token ==> add an error to the errors array
-            arrErrors.push('Wrong email or password');
+            // registration error ==> add an error to the errors array
+            arrErrors.push('Error during registrtaion.');
             this.setState({...this.state, errors: arrErrors});
           }
         })
         .catch(err => { 
           // Error ==> get the error from the response
           this.flgSending = 0;
-          $('.Login .Spinner').hide();
+          $('.Register .Spinner').hide();
           let objResponse = {};
           // parse error types
           if (err.response) {
@@ -153,11 +153,58 @@ class Login extends Component {
     }
   }
 
+  loginAfterRegister = (email, password) => {
+    if (this.flgSending === 0) {
+      this.flgSending = 1;
+      $('.Login .Spinner').show();
+
+      // send a log-in request to the API
+      axios.post(this.props.apiUrl + '/api/employees/login/', {
+        email:    email,
+        password: password
+      })
+      .then(resp => {
+        // Success ==> get the token
+        this.flgSending = 0;
+        $('.Login .Spinner').hide();
+        const objResponse = resp.data;
+        if (objResponse.data && objResponse.data.token && objResponse.data.token.length > 0) {
+
+          // token generated ==> save the token
+          this.props.saveToken(
+            objResponse.data.token, 
+            objResponse.data.strFirstName, 
+            objResponse.data.flgEmailVerified, 
+            objResponse.data.flgAdmin, 
+            objResponse.data._id
+          );
+
+          // force moving the logged-in user to personal area
+          if (objResponse.data.flgEmailVerified) {
+            window.location.href = '/employeesys/list';
+          } else {
+            window.location.href = '/employeesys/verify';
+          }
+
+        } else {
+          // no token ==> return to login screen
+          window.location.href = '/employeesys/login';
+        }
+      })
+      .catch(err => { 
+        // Error ==> return to the login screen
+        this.flgSending = 0;
+        $('.Login .Spinner').hide();
+        window.location.href = '/employeesys/login';
+      });
+    }
+  }
+
   handleLoggedIn = () => {
     // force redirect an already logged-in employee to the personal area
     if (this.props.strAuthToken && this.props.strAuthToken !== '') {
       $('.Container').hide();
-      $('.Login .RedirectSpinner').show();
+      $('.Register .RedirectSpinner').show();
       if (this.props.flgVerified && (this.props.flgVerified === true || this.props.flgVerified === 'true')) {
         window.location.href = '/employeesys/list';
       } else {
@@ -168,16 +215,22 @@ class Login extends Component {
 
   render() {
     return (
-      <div className="Login">
+      <div className="Register">
         <MDBContainer className="Container">
           <MDBRow className="Row align-items-center justify-content-center flex-column">
-            <p className="Title h2 text-center mb-4">Sign in</p>
+            <p className="Title h2 text-center mb-4">Register</p>
             <MDBCol md="6" className="Col mx-auto bg-white">
               <img src="/boy.png" alt="boy" className="Boy" />
 
               {/* login form */}
               <form onSubmit={this.handleSubmit}>
                 <div className="grey-text">
+
+                  {/* first name input */}
+                  <MDBInput label="First name" icon="user" group type="text" name="fname" validate success="right" />
+
+                  {/* last name input */}
+                  <MDBInput label="Last name" icon="user" group type="text" name="lname" validate success="right" />
 
                   {/* email input */}
                   <MDBInput label="Email" icon="envelope" group type="email" name="email" validate error="wrong" success="right" />
@@ -196,20 +249,16 @@ class Login extends Component {
                   
                   {/* submit button */}
                   <button type="submit" className="btn btn-primary Ripple-parent Btn" onClick={(event) => this.handleSubmit(event)}>
-                    Sign In
+                    Register
                     <div className="Ripple"></div>
                   </button>
+                  <Link to="/employeesys/login" className="ml-3">Cancel</Link>
 
                 </div>
               </form>
 
             </MDBCol>
-
-            {/* sign up link */}
-            <p className="SignUp mt-4 font-weight-bold">
-              Don't have an account? <Link to="/employeesys/register" title="Click to sign up">Sign Up</Link>
-            </p>
-
+            
           </MDBRow>
         </MDBContainer>
         {/* Redirect spinner */}
@@ -219,4 +268,4 @@ class Login extends Component {
   }
 };
 
-export default Login;
+export default Register;

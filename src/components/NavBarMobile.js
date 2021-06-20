@@ -41,6 +41,9 @@ class NavBarMobile extends React.Component {
     else if (window.location.href.indexOf('/employeesys/update') > 1) {
       window.location.href = '/employeesys/list';
     }
+    else {
+      window.location.href = '/employeesys/list';
+    }
   };
 
   render() {

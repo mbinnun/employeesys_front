@@ -20,7 +20,6 @@ class List extends Component {
 
   constructor(props) {
     super(props);
-    //console.log("List constructor", this.props); 
     
     // initialize the error array
     this.state.errors = [];
@@ -30,15 +29,11 @@ class List extends Component {
   }
 
   componentDidMount()    { 
-    //console.log("List componentDidMount"); 
-
     // redirect not logged-in employees to the login page
     if (!this.handleNotLoggedIn()) {
       this.getEmployeeData();
     }
   }
-  //componentDidUpdate()   { console.log("List componentDidUpdate"); }
-  //componentWillUnmount() { console.log("List componentWillUnmount"); }
 
   handleNotLoggedIn = () => {
     // force redirect not logged-in employees to the login page
@@ -61,39 +56,42 @@ class List extends Component {
   }
 
   getEmployeeData = () => {
-    // fetch employee list from the API
-    this.flgSending = 1;
-    $('.Container').hide();
-    $('.List .RedirectSpinner').show();
-    axios.get(this.props.apiUrl + '/api/employees/', {
-      headers: {
-        'Authorization': 'Bearer '+this.props.strAuthToken
-      }
-    })
-    .then(resp => {
-      // Success ==> get the employees list
-      this.flgSending = 0;
-      $('.List .RedirectSpinner').hide();
-      $('.Container').show();
-      const objResponse  = resp.data;
-      const arrEmployees = (objResponse.data && objResponse.data.length > 0) ? objResponse.data : [];
-      // update the state
-      this.setState({...this.state, arrEmployees: arrEmployees});
-    })
-    .catch(err => { 
-      // Error ==> Token is invalid or already expired
-      this.flgSending = 0;
-      $('.List .RedirectSpinner').hide();
-      $('.Container').show();
-      // Revoke the authorization token
-      this.props.removeToken();
-      // Force redirect to login page
-      window.location.href = '/employeesys/login';
-    });
+    if (this.flgSending === 0) {
+      // fetch employee list from the API
+      this.flgSending = 1;
+      $('.Container').hide();
+      $('.List .RedirectSpinner').show();
+      axios.get(this.props.apiUrl + '/api/employees/', {
+        headers: {
+          'Authorization': 'Bearer '+this.props.strAuthToken
+        }
+      })
+      .then(resp => {
+        // Success ==> get the employees list
+        this.flgSending = 0;
+        $('.List .RedirectSpinner').hide();
+        $('.Container').show();
+        const objResponse  = resp.data;
+        const arrEmployees = (objResponse.data && objResponse.data.length > 0) ? objResponse.data : [];
+        // update the state
+        this.setState({...this.state, arrEmployees: arrEmployees});
+      })
+      .catch(err => { 
+        // Error ==> Token is invalid or already expired
+        this.flgSending = 0;
+        $('.List .RedirectSpinner').hide();
+        $('.Container').show();
+        // Revoke the authorization token
+        this.props.removeToken();
+        // Force redirect to login page
+        window.location.href = '/employeesys/login';
+      });
+    }
   }
 
   deleteEmployee = (employeeId) => {
-    console.log('deleting employee', employeeId)
+    
+
   }
 
   employeeListBuilder = () => {

@@ -12,6 +12,7 @@ import NavBarMobile from './components/NavBarMobile';
 import List from './components/List';
 import Login from './components/Login';
 import Verify from './components/Verify';
+import Register from './components/Register';
 
 // Component injection
 class App extends Component {
@@ -27,13 +28,9 @@ class App extends Component {
       flgVerified : (localStorage.getItem('flgVerified'))  ? localStorage.getItem('flgVerified')  : false,
       strId       : (localStorage.getItem('strId'))        ? localStorage.getItem('strId')        : '',
     };
-
-    //console.log("App constructor", this.state); 
   }
 
-  ///componentDidMount()    { console.log("App componentDidMount"); }
-  //componentDidUpdate()    { console.log("App componentDidUpdate"); }
-  //componentWillUnmount()  { console.log("App componentWillUnmount"); }
+  // ==================================================================
 
   // == save a newly generate log-in token ==
   saveToken = (token, fname, isVerified, isAdmin, _id) => {
@@ -53,7 +50,7 @@ class App extends Component {
     localStorage.setItem('strId'       , _id);
   };
 
-  // == save a newly generate log-in token ==
+  // == remove token on logout ==
   removeToken = () => {
     // save the token to the state
     this.setState({...this.state, 
@@ -79,6 +76,8 @@ class App extends Component {
     // save the verify flag to the storage
     localStorage.setItem('flgVerified' , true);
   }
+
+  // ==================================================================
 
   NavBarMobile = () => {
     if (this.state.strAuthToken && this.state.strAuthToken !== '') {
@@ -113,9 +112,10 @@ class App extends Component {
             <Route exact path="/employeesys/" render={()=> <Redirect to='/employeesys/list' />} />
 
             {/* App pages */}
-            <Route exact path="/employeesys/list"   render={(props) => <List   {...this.state} removeToken={this.removeToken}             />} />
-            <Route exact path="/employeesys/login"  render={(props) => <Login  {...this.state} saveToken={this.saveToken}                 />} />
-            <Route exact path="/employeesys/verify" render={(props) => <Verify {...this.state} saveVerifiedState={this.saveVerifiedState} />} />
+            <Route exact path="/employeesys/list"     render={(props) => <List     {...this.state} removeToken={this.removeToken}             />} />
+            <Route exact path="/employeesys/login"    render={(props) => <Login    {...this.state} saveToken={this.saveToken}                 />} />
+            <Route exact path="/employeesys/verify"   render={(props) => <Verify   {...this.state} saveVerifiedState={this.saveVerifiedState} />} />
+            <Route exact path="/employeesys/register" render={(props) => <Register {...this.state} saveToken={this.saveToken}                 />} />
 
             {/* Catch all the other to 404 */}
             <Route component={PageNotFound} />

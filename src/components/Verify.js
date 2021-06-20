@@ -1,8 +1,7 @@
 // DOM dependencies
 import React, {Component} from 'react';
-import { Link } from 'react-router-dom';
 // MDB Componenets
-import { MDBContainer, MDBRow, MDBCol, MDBInput } from 'mdbreact';
+import { MDBContainer, MDBRow, MDBCol, MDBInput, MDBModal, MDBModalBody, MDBModalHeader, MDBModalFooter } from 'mdbreact';
 // AJAX helper
 import axios from 'axios';
 // JQuery
@@ -20,21 +19,29 @@ class Verify extends Component {
 
   constructor(props) {
     super(props);
-    //console.log("Verify constructor", this.props); 
     
     // initialize the error array
     this.state.errors = [];
+
+    // hide the modal
+    this.state.modal      = false;
+    this.state.modalTitle = '';
+    this.state.modalText  = '';
+  }
+
+  toggleModal = (strTitle, strText) => {
+    this.setState({
+      modal     : !this.state.modal,
+      modalTitle: strTitle,
+      modalText : strText
+    });
   }
 
   // == lifecycle hooks ==
   componentDidMount() { 
-    //console.log('componentDidMount');
-    
     // redirect an already logged-in employee to the private area
     this.handleLoggedIn();
   }
-  //componentDidUpdate()   { console.log("Verify componentDidUpdate"); }
-  //componentWillUnmount() { console.log("Verify componentWillUnmount"); }
 
   // Error list builder
   ErrorList = () => {
@@ -66,7 +73,7 @@ class Verify extends Component {
         // code error ==> add to the errors array
         arrErrors.push('Verification code is required');
       }
-      else if (code.length != 4) {
+      else if (code.length !== 4) {
         // code error ==> add to the errors array
         arrErrors.push('Invalid verification code');
       }
@@ -89,7 +96,6 @@ class Verify extends Component {
           this.flgSending = 0;
           $('.Verify .Spinner').hide();
           const objResponse = resp.data;
-          console.log(objResponse);
           if (objResponse.data && objResponse.data.flgEmailVerified && (objResponse.data.flgEmailVerified === true || objResponse.data.flgEmailVerified === 'true')) {
 
             // token generated ==> save the token
@@ -124,7 +130,6 @@ class Verify extends Component {
           else {
             objResponse = err;
           }
-          console.log(objResponse);
           // Validation error ==> iterate and add to the errors array
           if (objResponse.message && objResponse.message === 'Validation Error' && objResponse.data && objResponse.data.length > 0) {
             arrErrors.push(objResponse.data);
@@ -155,6 +160,33 @@ class Verify extends Component {
       $('.Container').hide();
       $('.Verify .RedirectSpinner').show();
       window.location.href = '/employeesys/login';
+    }
+  }
+
+  resendCode = (e) => {
+    e.preventDefault();
+    if (this.flgSending === 0) {
+      this.flgSending = 1;
+      $('.Login .Spinner').show();
+
+      // send a log-in request to the API
+      axios.post(this.props.apiUrl + '/api/employees/resend/', {}, {
+        headers: {
+          'Authorization': 'Bearer '+this.props.strAuthToken
+        }
+      })
+      .then(resp => {
+        // Success ==> show message
+        this.flgSending = 0;
+        $('.Login .Spinner').hide();
+        this.toggleModal('Code Sent', 'Verification code was sent to you e-mail.')
+      })
+      .catch(err => { 
+        // Error ==> show message
+        this.flgSending = 0;
+        $('.Login .Spinner').hide();
+        this.toggleModal('Code Not Sent', 'Error occured while re-sent the code.')
+      });
     }
   }
 
@@ -189,6 +221,9 @@ class Verify extends Component {
                     Verify
                     <div className="Ripple"></div>
                   </button>
+                  <a href="/verify" className="ml-3" onClick={this.resendCode}>
+                    Resend Code
+                  </a>
 
                 </div>
               </form>
@@ -199,6 +234,16 @@ class Verify extends Component {
         </MDBContainer>
         {/* Redirect spinner */}
         <div className="RedirectSpinner"><div className="spinner-border" role="status"><span className="sr-only">Loading...</span></div></div>
+        {/* pop up window */}
+        <MDBModal isOpen={this.state.modal} toggle={this.toggleModal}>
+          <MDBModalHeader toggle={this.toggleModal}>{this.state.modalTitle}</MDBModalHeader>
+          <MDBModalBody>
+            {this.state.modalText}
+          </MDBModalBody>
+          <MDBModalFooter>
+            <button className="btn-primary p-2" onClick={ (event) => {event.preventDefault(); this.toggleModal('', '');} }>Close</button>
+          </MDBModalFooter>
+        </MDBModal>
       </div>
     )
   }
